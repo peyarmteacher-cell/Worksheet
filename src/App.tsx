@@ -282,7 +282,7 @@ export default function App() {
       setCurrentExercise(result);
     } catch (error: any) {
       if (error.message === "Unauthorized") handleLogout();
-      else alert('เกิดข้อผิดพลาดในการสร้างแบบฝึกหัด โปรดลองอีกครั้ง');
+      else alert(error.message || 'เกิดข้อผิดพลาดในการสร้างแบบฝึกหัด โปรดลองอีกครั้ง');
     } finally {
       setIsGenerating(false);
     }
