@@ -1,5 +1,5 @@
 const express = require("express");
-const { GoogleGenAI } = require("@google/genai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require("path");
 const dotenv = require("dotenv");
 const mysql = require("mysql2/promise");
@@ -222,7 +222,7 @@ async function startServer() {
   });
 
   // --- AI API ---
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "dummy-key");
 
   app.post("/api/generate-exercise", authenticateToken, async (req, res) => {
     try {
@@ -239,7 +239,7 @@ async function startServer() {
       }
 
       // ใช้ API Key จากตัวแปรที่ดึงจาก DB (หรือจาก .env ถ้าไม่มี)
-      const genAI = new GoogleGenAI(apiKeyToUse);
+      const genAI = new GoogleGenerativeAI(apiKeyToUse);
       // ใช้โมเดล gemini-1.5-flash ซึ่งเสถียรและรวดเร็วที่สุด
       const model = genAI.getGenerativeModel({ 
         model: "gemini-1.5-flash",
