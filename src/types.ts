@@ -6,15 +6,24 @@ export type ExerciseType = 'การจับคู่ (Matching)' | 'ปรน
 
 export type Difficulty = 'ง่าย' | 'ปานกลาง' | 'ท้าทาย';
 
+export interface User {
+  id: number;
+  national_id: string;
+  full_name: string;
+  is_approved: boolean;
+  needs_password_change: boolean;
+}
+
 export interface Exercise {
   id?: string;
+  user_id?: number;
   title: string;
   grade: GradeLevel;
   subject: Subject;
   type: ExerciseType;
   difficulty: Difficulty;
-  content: string; // Markdown or structured text
+  content: string; // JSON string of the structure
   indicator?: string;
   description: string;
-  createdAt: number;
+  created_at: number;
 }
