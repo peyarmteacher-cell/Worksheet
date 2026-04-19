@@ -191,27 +191,25 @@ async function startServer() {
   });
 
   // UI serving
-  const distPath = path.join(process.cwd(), 'dist');
+  const distPath = path.join(__dirname, 'dist');
+  const indexPath = path.join(distPath, 'index.html');
   
+  console.log(`Checking for dist folder at: ${distPath}`);
+
   if (fs.existsSync(distPath)) {
-    console.log("Serving production files from /dist...");
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  } else {
-    // Development mode fallback
-    try {
-      const { createServer: createViteServer } = require("vite");
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: "spa",
+    if (fs.existsSync(indexPath)) {
+      console.log("Serving production files from /dist...");
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(indexPath);
       });
-      app.use(vite.middlewares);
-    } catch (e) {
-      console.log("Vite development server is not available. Please run 'npm run build' first.");
-      app.get('/', (req, res) => res.send("ระบบขัดข้อง: ไม่พบโฟลเดอร์ dist กรุณาทำการ Build โค้ดในเครื่องคอมพิวเตอร์ก่อนอัปโหลด"));
+    } else {
+      console.log("Error: Folder /dist found but index.html is missing inside!");
+      app.get('/', (req, res) => res.send("พบโฟลเดอร์ dist แต่ไม่พบไฟล์ index.html ข้างใน กรุณาตรวจสอบการ Copy ไฟล์"));
     }
+  } else {
+    console.log("Error: Folder /dist not found at root.");
+    app.get('/', (req, res) => res.send(`ไม่พบโฟลเดอร์ dist ที่ตำแหน่ง ${distPath} กรุณาอัปโหลดโฟลเดอร์ dist ขึ้นมาไว้ที่เดียวกับ app.js`));
   }
 
   // Windows IIS support
