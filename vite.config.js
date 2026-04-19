@@ -4,17 +4,24 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // ใช้ base เป็น ./ เพื่อให้ไฟล์อ้างอิงแบบ relative
+  // บังคับให้ Vite มองเห็นแค่โฟลเดอร์ปัจจุบัน
+  root: '.',
   base: './',
+  cacheDir: './node_modules/.vite',
+  envDir: '.',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     assetsDir: 'assets',
-    // ปิดการรายงานขนาดเพื่อลดการสแกนไฟล์
     reportCompressedSize: false,
-    // ป้องกัน esbuild จากการพยายามหาไฟล์นอกขอบเขต
+    // จัดการพฤติกรรมของ esbuild ใน Windows Server
     commonjsOptions: {
       include: [/node_modules/],
+      transformMixedEsModules: true
     },
+    rollupOptions: {
+      // ตรวจสอบว่าไม่มีการดึงไฟล์จากนอกโปรเจกต์
+      external: [],
+    }
   },
 });

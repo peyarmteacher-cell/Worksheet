@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "node app.js",
-    "build": "vite build --root . --config vite.config.js",
+    "build": "vite build --config vite.config.js",
+    "build:win": "node build-server.js",
     "start": "NODE_ENV=production node app.js",
     "preview": "vite preview",
     "clean": "node -e \"const fs = require('fs'); if (fs.existsSync('dist')) fs.rmSync('dist', { recursive: true, force: true })\"",
