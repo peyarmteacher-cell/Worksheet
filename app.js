@@ -32,19 +32,39 @@ async function startServer() {
     console.error("Database connection error:", err);
   }
 
+  // --- Middleware for Auth ---
+  const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        console.log("Auth Middleware: No token provided");
+        return res.sendStatus(401);
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) {
+        console.log("Auth Middleware: Invalid token");
+        return res.sendStatus(403);
+      }
+      req.user = user;
+      next();
+    });
+  };
+
   // --- Auth API ---
   app.post("/api/auth/register", async (req, res) => {
     const { national_id, full_name } = req.body;
     try {
       const hashedPassword = await bcrypt.hash("123456", 10);
-      // สมัครแล้วให้ใช้งานได้เลย (is_approved = 1) เพื่อความสะดวกของคุณครู
       await pool.execute(
         "INSERT INTO users (national_id, password, full_name, is_approved, needs_password_change) VALUES (?, ?, ?, 1, 1)",
         [national_id, hashedPassword, full_name]
       );
-      res.json({ message: "สมัครสมาชิกสำเร็จ! ใช้รหัสผ่าน 123456 เพื่อเข้าสู่ระบบ" });
+      res.json({ message: "สมัครสมาชิกสำเร็จ! ใช้รหัสผ่าน 123456 เข้าสู่ระบบเพื่อเปลี่ยนรหัสผ่าน" });
     } catch (error) {
-      res.status(500).json({ error: "สมัครไม่สำเร็จ: อาจมีเลขบัตรนี้ในระบบแล้ว" });
+      console.error("Register Error:", error.message);
+      res.status(500).json({ error: "สมัครไม่สำเร็จ: อาจมีบัญชีนี้อยู่ในระบบแล้ว" });
     }
   });
 
@@ -57,8 +77,8 @@ async function startServer() {
       const user = rows[0];
 
       if (!user) {
-        console.log("Login Status: User not found in database");
-        return res.status(400).json({ error: "ไม่พบข้อมูลผู้ใช้งานนี้ในระบบ" });
+        console.log("Login Status: User not found");
+        return res.status(400).json({ error: "ไม่พบข้อมูลผู้ใช้งาน" });
       }
 
       const valid = await bcrypt.compare(password, user.password);
@@ -75,14 +95,66 @@ async function startServer() {
       });
     } catch (e) {
       console.error("Login Error:", e.message);
-      res.status(500).json({ error: "เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล" });
+      res.status(500).json({ error: "ระบบขัดข้องในการเชื่อมต่อฐานข้อมูล" });
+    }
+  });
+
+  app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
+    const { newPassword } = req.body;
+    console.log(`Changing password for user id: ${req.user.id}`);
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await pool.execute(
+        "UPDATE users SET password = ?, needs_password_change = 0 WHERE id = ?",
+        [hashedPassword, req.user.id]
+      );
+      console.log("Password changed successfully");
+      res.json({ message: "เปลี่ยนรหัสผ่านสำเร็จแล้ว" });
+    } catch (error) {
+      console.error("Change Password Error:", error.message);
+      res.status(500).json({ error: "เปลี่ยนรหัสผ่านไม่สำเร็จ" });
+    }
+  });
+
+  // --- Exercise API ---
+  app.get("/api/exercises", authenticateToken, async (req, res) => {
+    try {
+      const [rows] = await pool.execute(
+        "SELECT * FROM exercises WHERE user_id = ? ORDER BY created_at DESC", 
+        [req.user.id]
+      );
+      res.json(rows);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/exercises", authenticateToken, async (req, res) => {
+    const { title, grade, subject, type, difficulty, content, indicator, description } = req.body;
+    try {
+      const [result] = await pool.execute(
+        "INSERT INTO exercises (user_id, title, grade, subject, type, difficulty, content, indicator, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [req.user.id, title, grade, subject, type, difficulty, JSON.stringify(content), indicator, description]
+      );
+      res.json({ id: result.insertId, message: "บันทึกสำเร็จ" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/exercises/:id", authenticateToken, async (req, res) => {
+    try {
+      await pool.execute("DELETE FROM exercises WHERE id = ? AND user_id = ?", [req.params.id, req.user.id]);
+      res.json({ message: "ลบสำเร็จ" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   });
 
   // --- AI API ---
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-  app.post("/api/generate-exercise", async (req, res) => {
+  app.post("/api/generate-exercise", authenticateToken, async (req, res) => {
     try {
       const { prompt, systemInstruction } = req.body;
       const response = await ai.models.generateContent({
@@ -92,11 +164,12 @@ async function startServer() {
       });
       res.json(JSON.parse(response.text || "{}"));
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error("AI Error:", error.message);
+      res.status(500).json({ error: "AI ขัดข้อง: " + error.message });
     }
   });
 
-  // --- UI Static Files (แก้หน้าจอขาว) ---
+  // --- UI Static Files ---
   const webRoot = fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : __dirname;
   app.use(express.static(webRoot));
   app.use('/assets', express.static(path.join(webRoot, 'assets')));
