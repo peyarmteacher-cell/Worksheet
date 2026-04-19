@@ -667,9 +667,8 @@ export default function App() {
       <main className="main-content">
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-2xl font-black text-gray-800 tracking-tight flex items-center gap-2">
+            <h2 className="text-2xl font-black text-gray-800 tracking-tight">
                {appView === 'admin' ? 'จัดการผู้ใช้งาน' : appView === 'profile' ? '👤 จัดการโปรไฟล์ & AI Key' : 'ระบบสร้างแบบฝึกหัดอัจฉริยะ'}
-               <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">v1.1</span>
             </h2>
             <p className="text-gray-400 text-sm font-medium">
                {appView === 'generator' ? `กำลังสร้าง: ${selectedGrade} | ${selectedSubject}` : `คุณครู: ${currentUser?.full_name}`}

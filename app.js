@@ -252,7 +252,7 @@ async function startServer() {
   });
 
   // --- UI Static Files ---
-  const webRoot = path.join(__dirname, 'public_html');
+  const webRoot = path.join(__dirname, 'dist');
   
   if (fs.existsSync(webRoot)) {
     console.log(`Serving static files from: ${webRoot}`);
@@ -261,7 +261,7 @@ async function startServer() {
       res.sendFile(path.join(webRoot, 'index.html'));
     });
   } else {
-    console.warn(`Warning: public_html folder not found at ${webRoot}. Serving root folder instead.`);
+    console.warn(`Warning: dist folder not found at ${webRoot}. Serving root folder instead.`);
     app.use(express.static(__dirname));
     app.get('*', (req, res) => {
       const idx = path.join(__dirname, 'index.html');

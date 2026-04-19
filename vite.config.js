@@ -7,7 +7,7 @@ export default defineConfig({
   // เปลี่ยนจาก ./ เป็น / เพื่อความเสถียรสูงสุดบน IIS
   base: '/',
   build: {
-    outDir: 'public_html',
+    outDir: 'dist',
     assetsDir: 'assets',
     emptyOutDir: true,
     reportCompressedSize: false,
