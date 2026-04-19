@@ -1,0 +1,6 @@
+{
+  "name": "KruAI Studio - Smart Exercise Generator",
+  "description": "ระบบสร้างแบบฝึกหัดอัจฉริยะสำหรับคุณครูประถมศึกษา เชื่อมต่อกับ Google AI Studio เพื่อสร้างสื่อการเรียนรู้ตามหลักสูตรแกนกลาง",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
