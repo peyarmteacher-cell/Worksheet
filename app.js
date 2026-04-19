@@ -28,6 +28,28 @@ async function startServer() {
   try {
     pool = mysql.createPool(dbConfig);
     console.log("Database System: Initialized");
+
+    // ตรวจสอบและซ่อมแซมบัญชี admin โดยอัตโนมัติเมื่อเริ่มระบบ
+    const [rows] = await pool.execute("SELECT * FROM users WHERE national_id = 'admin'");
+    if (rows.length === 0) {
+      console.log("Healing System: Re-creating default admin account...");
+      const hashedPassword = await bcrypt.hash("123456", 10);
+      await pool.execute(
+        "INSERT INTO users (national_id, password, full_name, is_approved, needs_password_change) VALUES ('admin', ?, 'ผู้ดูแลระบบ', 1, 0)",
+        [hashedPassword]
+      );
+      console.log("Healing System: Admin created successfully.");
+    } else {
+      // ตรวจสอบว่ารหัสผ่าน 123456 ตรงกันไหม ถ้าไม่ตรงให้รีเซ็ตให้ใหม่ (เฉพาะกรณี admin เท่านั้น)
+      const user = rows[0];
+      const isValid = await bcrypt.compare("123456", user.password);
+      if (!isValid) {
+        console.log("Healing System: Resetting admin password to 123456...");
+        const newHash = await bcrypt.hash("123456", 10);
+        await pool.execute("UPDATE users SET password = ?, is_approved = 1 WHERE national_id = 'admin'", [newHash]);
+        console.log("Healing System: Admin password reset done.");
+      }
+    }
   } catch (err) {
     console.error("Database connection error:", err);
   }
