@@ -251,16 +251,24 @@ async function startServer() {
     }
   });
 
-  // --- UI Static Files ---
-  const webRoot = fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : __dirname;
-  app.use(express.static(webRoot));
-  app.use('/assets', express.static(path.join(webRoot, 'assets')));
-
-  app.get('*', (req, res) => {
-    const idx = path.join(webRoot, 'index.html');
-    if (fs.existsSync(idx)) res.sendFile(idx);
-    else res.status(404).send("<h2>ระบบขัดข้อง: ไม่พบไฟล์หน้าเว็บ</h2>");
-  });
+  // --- UI Static Files & Vite Middleware ---
+  if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = require('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+    console.log("Vite Middleware: Enabled (Development)");
+  } else {
+    const webRoot = fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : __dirname;
+    app.use(express.static(webRoot));
+    app.get('*', (req, res) => {
+      const idx = path.join(webRoot, 'index.html');
+      if (fs.existsSync(idx)) res.sendFile(idx);
+      else res.status(404).send("<h2>ระบบขัดข้อง: ไม่พบไฟล์หน้าเว็บ</h2>");
+    });
+  }
 
   // Start Server
   if (typeof PORT === 'string' && PORT.startsWith('\\\\.\\pipe\\')) {
