@@ -571,21 +571,21 @@ export default function App() {
 
         <div className="flex flex-col gap-1 mb-6">
           <div
+            onClick={() => setAppView('profile')}
+            className={`subject-item ${appView === 'profile' ? 'active shadow-sm' : ''} border-2 ${appView === 'profile' ? 'border-primary' : 'border-transparent'}`}
+          >
+            <UserIcon className="w-5 h-5" />
+            <span className="font-bold">👤 ข้อมูลส่วนตัว & คีย์ AI</span>
+          </div>
+
+          <div
             onClick={() => setAppView('generator')}
             className={`subject-item ${appView === 'generator' ? 'active shadow-sm' : ''}`}
           >
             <Rocket className="w-5 h-5" />
-            <span className="font-bold">สร้างแบบฝึกหัด</span>
+            <span className="font-bold">📚 สร้างแบบฝึกหัด</span>
           </div>
           
-          <div
-            onClick={() => setAppView('profile')}
-            className={`subject-item ${appView === 'profile' ? 'active shadow-sm' : ''}`}
-          >
-            <Settings className="w-5 h-5" />
-            <span className="font-bold">ข้อมูลของฉัน & AI</span>
-          </div>
-
           {currentUser?.national_id === 'admin' && (
             <div
               onClick={() => setAppView('admin')}
@@ -665,7 +665,7 @@ export default function App() {
         <header className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-2xl font-black text-gray-800 tracking-tight">
-               {appView === 'admin' ? 'จัดการผู้ใช้งาน' : appView === 'profile' ? 'การตั้งค่าส่วนตัว' : 'สร้างแบบฝึกหัดอัจฉริยะ'}
+               {appView === 'admin' ? 'จัดการผู้ใช้งาน' : appView === 'profile' ? '👤 จัดการโปรไฟล์ & AI Key' : 'ระบบสร้างแบบฝึกหัดอัจฉริยะ'}
             </h2>
             <p className="text-gray-400 text-sm font-medium">
                {appView === 'generator' ? `กำลังสร้าง: ${selectedGrade} | ${selectedSubject}` : `คุณครู: ${currentUser?.full_name}`}
@@ -687,6 +687,30 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {!currentUser?.api_key && appView === 'generator' && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-4 bg-accent/20 border-2 border-accent rounded-2xl flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-accent rounded-lg">
+                <Bell className="w-5 h-5 text-gray-800" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-800">ยังไม่ได้ตั้งค่า คีย์ Google AI Studio</p>
+                <p className="text-xs text-gray-600 font-medium">กรุณาตั้งค่าคีย์ส่วนตัวเพื่อการใช้งานที่เสถียรยิ่งขึ้นในหน้าโปรไฟล์ของคุณ</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setAppView('profile')}
+              className="px-4 py-2 bg-accent text-gray-800 font-bold text-xs rounded-xl hover:opacity-90 active:scale-95 transition-all shadow-sm"
+            >
+              ไปที่หน้าตั้งค่าคีย์ AI →
+            </button>
+          </motion.div>
+        )}
 
         <AnimatePresence mode="wait">
           <motion.div
