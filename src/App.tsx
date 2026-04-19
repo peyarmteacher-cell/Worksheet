@@ -658,6 +658,9 @@ export default function App() {
             <LogOut className="w-5 h-5" />
             <span>ออกจากระบบ</span>
           </button>
+          <div className="mt-2 text-center text-[10px] text-gray-300 font-bold uppercase tracking-widest">
+            v1.1 | หากไม่พบเมนูใหม่ ให้กด Shift + F5
+          </div>
         </div>
       </aside>
 
