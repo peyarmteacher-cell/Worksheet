@@ -1,7 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
 import { ExerciseType, GradeLevel, Subject, Difficulty } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateExercise(params: {
   grade: GradeLevel;
@@ -15,7 +12,7 @@ export async function generateExercise(params: {
 
   const systemInstruction = `คุณคือผู้ช่วยอัจฉริยะสำหรับคุณครูระดับประถมศึกษาในประเทศไทย 
 หน้าที่ของคุณคือสร้างแบบฝึกหัดที่เน้นคุณภาพ อ้างอิงตามหลักสูตรแกนกลางการศึกษาขั้นพื้นฐานและตัวชี้วัดของระดับชั้นนั้นๆ 
-แบบฝึกหัดต้องมีความเหมาะสมกับช่วงวัยของนักเรียน สื่อความหมายชัดเจน และช่วยพัฒนาการเรียนรู้ได้อย่างแท้จริง
+แบบฝึกหัดต้องมีความเหมาะสมกับช่วงวัยของระดับชั้น ${grade} สื่อความหมายชัดเจน และช่วยพัฒนาการเรียนรู้ได้อย่างแท้จริง
 
 รูปแบบข้อมูลขาออก: ให้ส่งคืนในรูปแบบ JSON ที่มีโครงสร้างดังนี้:
 {
@@ -24,12 +21,6 @@ export async function generateExercise(params: {
   "instructions": "คำชี้แจงสำหรับนักเรียน",
   "items": [...] // รายการข้อสอบหรือกิจกรรมตามรูปแบบที่เลือก
 }
-
-คำแนะนำเพิ่มเติมตามรูปแบบ:
-- การจับคู่: ให้มีคู่รายการที่สัมพันธ์กัน
-- ปรนัย: ให้มีโจทย์ ตัวเลือก (ก, ข, ค, ง) และเฉลย
-- อัตนัย: ให้มีโจทย์และแนวทางคำตอบ
-- เติมคำ: ให้มีประโยคหรือข้อความที่มีช่องว่างและคำที่ควรเติม
 `;
 
   const prompt = `สร้างแบบฝึกหัดสำหรับชั้น ${grade}
@@ -37,21 +28,23 @@ export async function generateExercise(params: {
 รูปแบบ: ${type}
 ระดับความยาก: ${difficulty}
 จำนวน: ${count} ข้อ
-รายละเอียดเพิ่มเติมหรือเนื้อหาที่ต้องการ: ${description}
-
-โปรดสร้างแบบฝึกหัดที่เป็นภาษาไทยทั้งหมด และจัดรูปแบบให้สวยงามสแกนอ่านง่าย`;
+รายละเอียดเนื้อหา: ${description}`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
+    const response = await fetch("/api/generate-exercise", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ prompt, systemInstruction }),
     });
 
-    return JSON.parse(response.text || "{}");
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to generate exercise");
+    }
+
+    return await response.json();
   } catch (error) {
     console.error("Error generating exercise:", error);
     throw error;
