@@ -7,11 +7,13 @@ async function runBuild() {
   console.log('--- Starting Custom Build for Windows Server ---');
   try {
     await build({
+      // ระบุ path ของโฟลเดอร์ปัจจุบันให้ชัดเจนที่สุด
+      root: path.resolve(__dirname),
       configFile: path.resolve(__dirname, 'vite.config.js'),
-      root: __dirname,
       build: {
         outDir: path.resolve(__dirname, 'dist'),
         emptyOutDir: true,
+        reportCompressedSize: false,
       }
     });
     console.log('--- Build Successfully Completed! ---');
