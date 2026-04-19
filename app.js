@@ -252,10 +252,21 @@ async function startServer() {
       });
       
       const response = await result.response;
-      const text = response.text();
-      res.json(JSON.parse(text || "{}"));
+      let text = response.text();
+      
+      // ฟังก์ชันช่วยทำความสะอาดข้อมูล JSON (ตัด ```json ... ``` ออกถ้ามี)
+      const cleanJson = (str) => {
+        try {
+          const match = str.match(/\{[\s\S]*\}/);
+          return match ? match[0] : str;
+        } catch (e) { return str; }
+      };
+
+      const finalJson = cleanJson(text);
+      console.log("AI Response received and cleaned");
+      res.json(JSON.parse(finalJson || "{}"));
     } catch (error) {
-      console.error("AI Error:", error.message);
+      console.error("AI Error Detailed:", error);
       res.status(500).json({ error: "AI ขัดข้อง: " + error.message });
     }
   });
