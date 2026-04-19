@@ -199,6 +199,10 @@ async function startServer() {
   if (fs.existsSync(distPath)) {
     if (fs.existsSync(indexPath)) {
       console.log("Serving production files from /dist...");
+      
+      // เพิ่มบรรทัดนี้เพื่อชี้เป้าโฟลเดอร์ assets ให้ชัดเจนขึ้น
+      app.use('/assets', express.static(path.join(distPath, 'assets')));
+      
       app.use(express.static(distPath));
       app.get('*', (req, res) => {
         res.sendFile(indexPath);
