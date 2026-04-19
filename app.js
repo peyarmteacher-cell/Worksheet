@@ -238,13 +238,22 @@ async function startServer() {
         return res.status(400).json({ error: "ไม่พบ API KEY กรุณาตั้งค่า API KEY ส่วนตัวในหน้าโปรไฟล์" });
       }
 
-      const userAi = new GoogleGenAI({ apiKey: apiKeyToUse });
-      const response = await userAi.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt,
-        config: { systemInstruction, responseMimeType: "application/json" },
+      // ใช้ API Key จากตัวแปรที่ดึงจาก DB (หรือจาก .env ถ้าไม่มี)
+      const genAI = new GoogleGenAI(apiKeyToUse);
+      // ใช้โมเดล gemini-1.5-flash ซึ่งเสถียรและรวดเร็วที่สุด
+      const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        systemInstruction: systemInstruction 
       });
-      res.json(JSON.parse(response.text || "{}"));
+
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+      });
+      
+      const response = await result.response;
+      const text = response.text();
+      res.json(JSON.parse(text || "{}"));
     } catch (error) {
       console.error("AI Error:", error.message);
       res.status(500).json({ error: "AI ขัดข้อง: " + error.message });
