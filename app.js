@@ -271,10 +271,18 @@ async function startServer() {
   }
 
   // Start Server
+  const listenMsg = () => {
+    console.log("-----------------------------------------");
+    console.log(`🚀 KruAI Server v1.1 - Online`);
+    console.log(`Mode: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Port: ${PORT}`);
+    console.log("-----------------------------------------");
+  };
+
   if (typeof PORT === 'string' && PORT.startsWith('\\\\.\\pipe\\')) {
-    app.listen(PORT, () => { console.log(`Connected to IISNode`); });
+    app.listen(PORT, () => { console.log(`Connected to IISNode`); listenMsg(); });
   } else {
-    app.listen(Number(PORT), "0.0.0.0", () => { console.log(`Server running on port ${PORT}`); });
+    app.listen(Number(PORT), "0.0.0.0", () => { listenMsg(); });
   }
 }
 
