@@ -1,18 +1,13 @@
-import express from "express";
-import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
-import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
-import mysql from "mysql2/promise";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import fs from "fs";
+const express = require("express");
+const { GoogleGenAI } = require("@google/genai");
+const path = require("path");
+const dotenv = require("dotenv");
+const mysql = require("mysql2/promise");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const fs = require("fs");
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const JWT_SECRET = process.env.JWT_SECRET || "kruai-secret-key-123";
 
@@ -35,7 +30,6 @@ async function startServer() {
     pool = mysql.createPool(dbConfig);
     console.log("Connected to MySQL Database");
 
-    // Initialize Tables
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -86,7 +80,6 @@ async function startServer() {
   app.post("/api/auth/register", async (req, res) => {
     const { national_id, full_name } = req.body;
     try {
-      // Default password is "1-6" (123456)
       const hashedPassword = await bcrypt.hash("123456", 10);
       await pool.execute(
         "INSERT INTO users (national_id, password, full_name, needs_password_change) VALUES (?, ?, ?, 1)",
@@ -112,11 +105,6 @@ async function startServer() {
       
       const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) return res.status(400).json({ error: "รหัสผ่านไม่ถูกต้อง" });
-
-      if (!user.is_approved && national_id !== "admin") {
-        // Simple admin override or just check is_approved
-        // return res.status(403).json({ error: "บัญชีของคุณยังไม่ได้รับการอนุมัติ" });
-      }
 
       const token = jwt.sign({ id: user.id, national_id: user.national_id }, JWT_SECRET);
       res.json({ 
@@ -205,23 +193,28 @@ async function startServer() {
   // UI serving
   const distPath = path.join(process.cwd(), 'dist');
   
-  // ใน Windows Server/Plesk บางครั้งการเซ็ต NODE_ENV ทำได้ยาก 
-  // เราจะเช็คว่าถ้ามีโฟลเดอร์ dist ให้รันแบบ Production ทันที
   if (fs.existsSync(distPath)) {
     console.log("Serving production files from /dist...");
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
-  } else if (process.env.NODE_ENV !== "production") {
-    console.log("Starting Vite development middleware...");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
+  } else {
+    // Development mode fallback
+    try {
+      const { createServer: createViteServer } = require("vite");
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } catch (e) {
+      console.log("Vite development server is not available. Please run 'npm run build' first.");
+      app.get('/', (req, res) => res.send("ระบบขัดข้อง: ไม่พบโฟลเดอร์ dist กรุณาทำการ Build โค้ดในเครื่องคอมพิวเตอร์ก่อนอัปโหลด"));
+    }
   }
 
+  // Windows IIS support
   if (typeof PORT === 'string' && PORT.startsWith('\\\\.\\pipe\\')) {
     app.listen(PORT, () => {
       console.log(`Server running on named pipe: ${PORT}`);
