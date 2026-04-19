@@ -177,7 +177,7 @@ export function Auth({ onLogin, onRegisterSuccess }: AuthProps) {
         <div className="mt-8 pt-6 border-t border-gray-100 text-center">
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-primary font-bold text-sm hover:underline flex items-center gap-2 mx-auto"
+            className="text-primary font-bold text-sm hover:underline flex items-center gap-2 mx-auto cursor-pointer"
           >
             {isLogin ? (
               <>

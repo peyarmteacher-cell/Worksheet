@@ -370,13 +370,13 @@ export default function App() {
                           <div className="flex justify-end gap-2">
                             <button 
                               onClick={() => handleApprove(user.id, true)}
-                              className="p-2 bg-success/10 text-success rounded-lg hover:bg-success hover:text-white transition-all"
+                              className="p-2 bg-success/10 text-success rounded-lg hover:bg-success hover:text-white transition-all cursor-pointer"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                             <button 
                               onClick={() => handleApprove(user.id, false)}
-                              className="p-2 bg-danger/10 text-danger rounded-lg hover:bg-danger hover:text-white transition-all"
+                              className="p-2 bg-danger/10 text-danger rounded-lg hover:bg-danger hover:text-white transition-all cursor-pointer"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -640,7 +640,7 @@ export default function App() {
               >
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-bold text-gray-700 truncate flex-1">{ex.title}</p>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(Number(ex.id)); }} className="opacity-0 group-hover:opacity-100 p-1 text-danger hover:bg-danger/10 rounded-md transition-all">
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(Number(ex.id)); }} className="opacity-0 group-hover:opacity-100 p-1 text-danger hover:bg-danger/10 rounded-md transition-all cursor-pointer">
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
