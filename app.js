@@ -251,20 +251,20 @@ async function startServer() {
     }
   });
 
-  // --- UI Static Files & Vite Middleware ---
-  if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = require('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-    console.log("Vite Middleware: Enabled (Development)");
-  } else {
-    const webRoot = fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : __dirname;
+  // --- UI Static Files ---
+  const webRoot = path.join(__dirname, 'public_html');
+  
+  if (fs.existsSync(webRoot)) {
+    console.log(`Serving static files from: ${webRoot}`);
     app.use(express.static(webRoot));
     app.get('*', (req, res) => {
-      const idx = path.join(webRoot, 'index.html');
+      res.sendFile(path.join(webRoot, 'index.html'));
+    });
+  } else {
+    console.warn(`Warning: public_html folder not found at ${webRoot}. Serving root folder instead.`);
+    app.use(express.static(__dirname));
+    app.get('*', (req, res) => {
+      const idx = path.join(__dirname, 'index.html');
       if (fs.existsSync(idx)) res.sendFile(idx);
       else res.status(404).send("<h2>ระบบขัดข้อง: ไม่พบไฟล์หน้าเว็บ</h2>");
     });

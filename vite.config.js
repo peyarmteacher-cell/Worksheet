@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: './',
   build: {
-    outDir: 'dist',
+    outDir: 'public_html',
     assetsDir: 'assets',
     emptyOutDir: true,
     reportCompressedSize: false,
