@@ -10,6 +10,9 @@ export interface User {
   id: number;
   national_id: string;
   full_name: string;
+  school?: string;
+  position?: string;
+  api_key?: string;
   is_approved: boolean;
   needs_password_change: boolean;
 }

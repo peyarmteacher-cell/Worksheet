@@ -29,6 +29,14 @@ async function startServer() {
     pool = mysql.createPool(dbConfig);
     console.log("Database System: Initialized");
 
+    // ตรวจสอบและซ่อมแซมตาราง users ให้มีคอลัมน์ใหม่
+    try {
+      await pool.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS school VARCHAR(255) DEFAULT NULL");
+      await pool.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS position VARCHAR(255) DEFAULT NULL");
+      await pool.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS api_key TEXT DEFAULT NULL");
+      console.log("Database System: Schema Updated");
+    } catch (e) { console.log("Database Schema: Already up to date or error occurred", e.message); }
+
     // ตรวจสอบและซ่อมแซมบัญชี admin โดยอัตโนมัติเมื่อเริ่มระบบ
     const [rows] = await pool.execute("SELECT * FROM users WHERE national_id = 'admin'");
     if (rows.length === 0) {
@@ -76,16 +84,16 @@ async function startServer() {
 
   // --- Auth API ---
   app.post("/api/auth/register", async (req, res) => {
-    const { national_id, full_name, password } = req.body;
+    const { national_id, full_name, password, school, position } = req.body;
     try {
       if (!password || password.length < 6) {
         return res.status(400).json({ error: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" });
       }
       const hashedPassword = await bcrypt.hash(password, 10);
-      // สมัครแล้วต้องรออนุมัติ (is_approved = 0) และไม่มีบังคับเปลี่ยนรหัสผ่านเพราะตั้งเองแล้ว
+      // สมัครแล้วต้องรออนุมัติ (is_approved = 0)
       await pool.execute(
-        "INSERT INTO users (national_id, password, full_name, is_approved, needs_password_change) VALUES (?, ?, ?, 0, 0)",
-        [national_id, hashedPassword, full_name]
+        "INSERT INTO users (national_id, password, full_name, school, position, is_approved, needs_password_change) VALUES (?, ?, ?, ?, ?, 0, 0)",
+        [national_id, hashedPassword, full_name, school, position]
       );
       res.json({ message: "สมัครสมาชิกสำเร็จ! โปรดรอผู้ดูแลระบบอนุมัติการเข้าใช้งาน" });
     } catch (error) {
@@ -122,7 +130,15 @@ async function startServer() {
       console.log("Login Status: Success");
       res.json({ 
         token, 
-        user: { id: user.id, full_name: user.full_name, needs_password_change: user.needs_password_change, national_id: user.national_id } 
+        user: { 
+          id: user.id, 
+          full_name: user.full_name, 
+          school: user.school,
+          position: user.position,
+          api_key: user.api_key,
+          needs_password_change: user.needs_password_change, 
+          national_id: user.national_id 
+        } 
       });
     } catch (e) {
       console.error("Login Error:", e.message);
@@ -130,20 +146,43 @@ async function startServer() {
     }
   });
 
-  app.post("/api/auth/change-password", authenticateToken, async (req, res) => {
-    const { newPassword } = req.body;
-    console.log(`Changing password for user id: ${req.user.id}`);
+  app.post("/api/user/profile", authenticateToken, async (req, res) => {
+    const { full_name, school, position, api_key } = req.body;
     try {
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
       await pool.execute(
-        "UPDATE users SET password = ?, needs_password_change = 0 WHERE id = ?",
-        [hashedPassword, req.user.id]
+        "UPDATE users SET full_name = ?, school = ?, position = ?, api_key = ? WHERE id = ?",
+        [full_name, school, position, api_key, req.user.id]
       );
-      console.log("Password changed successfully");
-      res.json({ message: "เปลี่ยนรหัสผ่านสำเร็จแล้ว" });
+      res.json({ message: "อัปเดตโปรไฟล์สำเร็จ" });
     } catch (error) {
-      console.error("Change Password Error:", error.message);
-      res.status(500).json({ error: "เปลี่ยนรหัสผ่านไม่สำเร็จ" });
+      res.status(500).json({ error: "อัปเดตไม่สำเร็จ" });
+    }
+  });
+
+  // --- Admin API ---
+  app.get("/api/admin/pending-users", authenticateToken, async (req, res) => {
+    // ตรวจว่าเป็น admin ไหม (ง่ายๆ คือ check national_id)
+    if (req.user.national_id !== 'admin') return res.sendStatus(403);
+    try {
+      const [rows] = await pool.execute("SELECT id, national_id, full_name, school, position, created_at FROM users WHERE is_approved = 0");
+      res.json(rows);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/approve-user", authenticateToken, async (req, res) => {
+    if (req.user.national_id !== 'admin') return res.sendStatus(403);
+    const { userId, approve } = req.body;
+    try {
+      if (approve) {
+        await pool.execute("UPDATE users SET is_approved = 1 WHERE id = ?", [userId]);
+      } else {
+        await pool.execute("DELETE FROM users WHERE id = ? AND is_approved = 0", [userId]);
+      }
+      res.json({ message: approve ? "อนุมัติสำเร็จ" : "ปฏิเสธสำเร็จ" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   });
 
@@ -188,7 +227,19 @@ async function startServer() {
   app.post("/api/generate-exercise", authenticateToken, async (req, res) => {
     try {
       const { prompt, systemInstruction } = req.body;
-      const response = await ai.models.generateContent({
+      
+      // ดึง API Key ของผู้ใช้จาก DB
+      const [rows] = await pool.execute("SELECT api_key FROM users WHERE id = ?", [req.user.id]);
+      const userApiKey = rows[0]?.api_key;
+      
+      const apiKeyToUse = userApiKey || process.env.GEMINI_API_KEY;
+      
+      if (!apiKeyToUse) {
+        return res.status(400).json({ error: "ไม่พบ API KEY กรุณาตั้งค่า API KEY ส่วนตัวในหน้าโปรไฟล์" });
+      }
+
+      const userAi = new GoogleGenAI({ apiKey: apiKeyToUse });
+      const response = await userAi.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
         config: { systemInstruction, responseMimeType: "application/json" },

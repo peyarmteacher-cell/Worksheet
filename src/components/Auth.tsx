@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, Rocket, Lock, Fingerprint, UserPlus } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Rocket, Lock, Fingerprint, UserPlus, BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface AuthProps {
@@ -12,8 +12,20 @@ export function Auth({ onLogin, onRegisterSuccess }: AuthProps) {
   const [nationalId, setNationalId] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [school, setSchool] = useState('');
+  const [position, setPosition] = useState('ครู คศ. 1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const positions = [
+    'ครูอัตราจ้าง',
+    'พนักงานราชการครู',
+    'ครู',
+    'ครู คศ. 1',
+    'ครู คศ. 2',
+    'ครู คศ. 3',
+    'ครู คศ. 4'
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +35,7 @@ export function Auth({ onLogin, onRegisterSuccess }: AuthProps) {
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
     const body = isLogin 
       ? { national_id: nationalId, password }
-      : { national_id: nationalId, full_name: fullName, password };
+      : { national_id: nationalId, full_name: fullName, password, school, position };
 
     try {
       const resp = await fetch(endpoint, {
@@ -83,19 +95,49 @@ export function Auth({ onLogin, onRegisterSuccess }: AuthProps) {
           </div>
 
           {!isLogin && (
-            <div className="space-y-1">
-              <label className="text-sm font-bold text-gray-600 flex items-center gap-2">
-                <User className="w-4 h-4" /> ชื่อ-นามสกุล
-              </label>
-              <input
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none transition-all"
-                placeholder="ชื่อของคุณครู"
-              />
-            </div>
+            <>
+              <div className="space-y-1">
+                <label className="text-sm font-bold text-gray-600 flex items-center gap-2">
+                  <User className="w-4 h-4" /> ชื่อ-นามสกุล
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none transition-all"
+                  placeholder="ชื่อของคุณครู"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-bold text-gray-600 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" /> โรงเรียน
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={school}
+                  onChange={(e) => setSchool(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none transition-all"
+                  placeholder="ชื่อโรงเรียนของคุณครู"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-bold text-gray-600 flex items-center gap-2">
+                  <Rocket className="w-4 h-4" /> ตำแหน่ง
+                </label>
+                <select
+                  required
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none transition-all"
+                >
+                  {positions.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+            </>
           )}
 
           <div className="space-y-1">
