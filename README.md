@@ -1,20 +1,54 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# KruAI Studio - ระบบสร้างแบบฝึกหัดอัจฉริยะ
 
-# Run and deploy your AI Studio app
+ระบบช่วยคุณครูสร้างแบบฝึกหัดด้วย AI (Google Gemini) พร้อมระบบบันทึกข้อมูลลงฐานข้อมูล MySQL และพิมพ์ออกมาเป็นขนาด A4
 
-This contains everything you need to run your app locally.
+## เริ่มต้นใช้งานในเครื่องคอมพิวเตอร์ของคุณ (Local Setup)
 
-View your app in AI Studio: https://ai.studio/apps/d7894327-193c-4554-9539-39a0fc9bc820
+### 1. ติดตั้งสิ่งที่จำเป็น
+*   **Node.js:** ดาวน์โหลดและติดตั้งเวอร์ชันล่าสุด (LTS) จาก [nodejs.org](https://nodejs.org/)
+*   **Git:** ติดตั้งจาก [git-scm.com](https://git-scm.com/) (หรือใช้โปรแกรม GitHub Desktop)
 
-## Run Locally
+### 2. นำโค้ดลงเครื่อง (จาก GitHub)
+1.  เปิดโปรแกรม Terminal หรือ Command Prompt
+2.  ใช้คำสั่ง Clone (เปลี่ยน URL เป็นลิงก์ GitHub ของคุณ):
+    ```bash
+    git clone https://github.com/your-username/your-repo-name.git
+    ```
+3.  เข้าไปในโฟลเดอร์:
+    ```bash
+    cd your-repo-name
+    ```
 
-**Prerequisites:**  Node.js
+### 3. ติดตั้งแพคเกจ
+```bash
+npm install
+```
 
+### 4. ตั้งค่า Environment Variables (.env)
+สร้างไฟล์ชื่อ `.env` ไว้ที่โฟลเดอร์หลัก และใส่ข้อมูลดังนี้:
+```env
+GEMINI_API_KEY=รหัส_API_KEY_ของคุณ
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=kruai_db
+JWT_SECRET=ใส่รหัสสุ่มอะไรก็ได้
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 5. การรันระบบ
+*   **สำหรับรันเพื่อพัฒนา/แก้ไข (Development):**
+    ```bash
+    npm run dev
+    ```
+*   **สำหรับสร้างไฟล์เพื่ออัปโหลดขึ้น Server (Build):**
+    ```bash
+    npm run build
+    ```
+    *หลังจากใช้คำสั่งนี้ คุณจะได้โฟลเดอร์ `dist` ซึ่งสามารถนำไปอัปโหลดขึ้นเซิร์ฟเวอร์ Plesk ได้ทันที*
+
+---
+
+## โครงสร้างโปรเจกต์
+*   `app.js` - ไฟล์หลักฝั่ง Server (Node.js/Express)
+*   `src/` - ไฟล์ฝั่งหน้าเว็บ (React/TypeScript)
+*   `dist/` - ไฟล์ที่พร้อมใช้งานจริง (จะปรากฏหลังจากสั่ง build)

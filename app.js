@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import fs from "fs";
 
 dotenv.config();
 
@@ -202,18 +203,23 @@ async function startServer() {
   });
 
   // UI serving
-  if (process.env.NODE_ENV !== "production") {
+  const distPath = path.join(process.cwd(), 'dist');
+  
+  // ใน Windows Server/Plesk บางครั้งการเซ็ต NODE_ENV ทำได้ยาก 
+  // เราจะเช็คว่าถ้ามีโฟลเดอร์ dist ให้รันแบบ Production ทันที
+  if (fs.existsSync(distPath)) {
+    console.log("Serving production files from /dist...");
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else if (process.env.NODE_ENV !== "production") {
+    console.log("Starting Vite development middleware...");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
   }
 
   if (typeof PORT === 'string' && PORT.startsWith('\\\\.\\pipe\\')) {
