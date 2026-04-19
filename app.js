@@ -54,14 +54,18 @@ async function startServer() {
 
   // --- Auth API ---
   app.post("/api/auth/register", async (req, res) => {
-    const { national_id, full_name } = req.body;
+    const { national_id, full_name, password } = req.body;
     try {
-      const hashedPassword = await bcrypt.hash("123456", 10);
+      if (!password || password.length < 6) {
+        return res.status(400).json({ error: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" });
+      }
+      const hashedPassword = await bcrypt.hash(password, 10);
+      // สมัครแล้วต้องรออนุมัติ (is_approved = 0) และไม่มีบังคับเปลี่ยนรหัสผ่านเพราะตั้งเองแล้ว
       await pool.execute(
-        "INSERT INTO users (national_id, password, full_name, is_approved, needs_password_change) VALUES (?, ?, ?, 1, 1)",
+        "INSERT INTO users (national_id, password, full_name, is_approved, needs_password_change) VALUES (?, ?, ?, 0, 0)",
         [national_id, hashedPassword, full_name]
       );
-      res.json({ message: "สมัครสมาชิกสำเร็จ! ใช้รหัสผ่าน 123456 เข้าสู่ระบบเพื่อเปลี่ยนรหัสผ่าน" });
+      res.json({ message: "สมัครสมาชิกสำเร็จ! โปรดรอผู้ดูแลระบบอนุมัติการเข้าใช้งาน" });
     } catch (error) {
       console.error("Register Error:", error.message);
       res.status(500).json({ error: "สมัครไม่สำเร็จ: อาจมีบัญชีนี้อยู่ในระบบแล้ว" });
@@ -84,14 +88,19 @@ async function startServer() {
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) {
         console.log("Login Status: Password mismatch");
-        return res.status(400).json({ error: "รหัสผ่านไม่ถูกต้อง" });
+        return res.status(400).json({ error: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" });
+      }
+
+      if (user.is_approved !== 1) {
+        console.log("Login Status: Not approved");
+        return res.status(403).json({ error: "บัญชีของคุณยังไม่ได้รับการอนุมัติ โปรดติดต่อผู้ดูแลระบบ" });
       }
 
       const token = jwt.sign({ id: user.id, national_id: user.national_id }, JWT_SECRET);
       console.log("Login Status: Success");
       res.json({ 
         token, 
-        user: { id: user.id, full_name: user.full_name, needs_password_change: user.needs_password_change } 
+        user: { id: user.id, full_name: user.full_name, needs_password_change: user.needs_password_change, national_id: user.national_id } 
       });
     } catch (e) {
       console.error("Login Error:", e.message);

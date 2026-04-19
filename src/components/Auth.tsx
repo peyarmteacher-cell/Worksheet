@@ -23,7 +23,7 @@ export function Auth({ onLogin, onRegisterSuccess }: AuthProps) {
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
     const body = isLogin 
       ? { national_id: nationalId, password }
-      : { national_id: nationalId, full_name: fullName };
+      : { national_id: nationalId, full_name: fullName, password };
 
     try {
       const resp = await fetch(endpoint, {
@@ -38,7 +38,7 @@ export function Auth({ onLogin, onRegisterSuccess }: AuthProps) {
       if (isLogin) {
         onLogin(data.token, data.user);
       } else {
-        alert('สมัครสมาชิกสำเร็จ! รหัสผ่านเริ่มต้นคือ 123456 โปรดรอการอนุมัติ (ถ้ามี)');
+        alert(data.message || 'สมัครสมาชิกสำเร็จ! โปรดรอการอนุมัติจากผู้ดูแลระบบ');
         onRegisterSuccess();
         setIsLogin(true);
       }
@@ -98,21 +98,20 @@ export function Auth({ onLogin, onRegisterSuccess }: AuthProps) {
             </div>
           )}
 
-          {isLogin && (
-            <div className="space-y-1">
-              <label className="text-sm font-bold text-gray-600 flex items-center gap-2">
-                <Lock className="w-4 h-4" /> รหัสผ่าน
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none transition-all"
-                placeholder="******"
-              />
-            </div>
-          )}
+          <div className="space-y-1">
+            <label className="text-sm font-bold text-gray-600 flex items-center gap-2">
+              <Lock className="w-4 h-4" /> รหัสผ่าน
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none transition-all"
+              placeholder={isLogin ? "******" : "ตั้งรหัสผ่าน 6 ตัวขึ้นไป"}
+            />
+          </div>
 
           {error && (
             <p className="text-sm text-danger font-bold text-center">{error}</p>
