@@ -12,19 +12,20 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   app.use(express.json());
 
   // Initialize Gemini
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+  const apiKey = process.env.GEMINI_API_KEY || "";
+  const ai = new GoogleGenAI({ apiKey });
 
   // API Route for Exercise Generation
   app.post("/api/generate-exercise", async (req, res) => {
     try {
       const { prompt, systemInstruction } = req.body;
 
-      if (!process.env.GEMINI_API_KEY) {
+      if (!apiKey) {
         return res.status(500).json({ error: "Missing GEMINI_API_KEY on server" });
       }
 
@@ -38,7 +39,7 @@ async function startServer() {
       });
 
       res.json(JSON.parse(response.text || "{}"));
-    } catch (error: any) {
+    } catch (error) {
       console.error("Gemini Error:", error);
       res.status(500).json({ error: error.message });
     }
@@ -52,6 +53,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    // production static serving
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
