@@ -28,13 +28,21 @@ try {
     exit;
 }
 
-// 2. ฟังก์ชันตรวจสอบ Token (JWT แบบง่ายสำหรับ PHP)
+// 2. ฟังก์ชันตรวจสอบ Token (รองรับทั้ง Apache และ IIS)
 function getAuthUser($conn) {
-    $headers = apache_request_headers();
-    if (isset($headers['Authorization'])) {
-        $token = str_replace('Bearer ', '', $headers['Authorization']);
-        // ในเวอร์ชันนี้เราจะใช้ Token เป็น ID ของผู้ใช้โดยตรงหรือเก็บใน Session 
-        // เพื่อให้คุณครูติดตั้งง่ายที่สุดบน Hosting ทั่วไป
+    $authHeader = null;
+    if (function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        if (isset($headers['Authorization'])) {
+            $authHeader = $headers['Authorization'];
+        }
+    }
+    if (!$authHeader && isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+    }
+
+    if ($authHeader) {
+        $token = str_replace('Bearer ', '', $authHeader);
         $stmt = $conn->prepare("SELECT * FROM users WHERE auth_token = ?");
         $stmt->execute([$token]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
