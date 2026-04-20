@@ -14,12 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 
 // --- 1. เชื่อมต่อฐานข้อมูล (ดึงค่าจาก config.php) ---
 if (!file_exists('config.php')) {
-    echo json_encode(["error" => "ไม่พบไฟล์ config.php กรุณาสร้างไฟล์เพื่อตั้งค่าฐานข้อมูลก่อน"]);
+    echo json_encode(["error" => "ไม่พบไฟล์ config.php บนเซิร์ฟเวอร์ กรุณาสร้างไฟล์ config.php เพื่อเชื่อมต่อฐานข้อมูล"]);
     exit;
 }
 require_once 'config.php';
 
 try {
+    // ต้องแน่ใจว่าใน config.php มีตัวแปร $db_host, $db_name, $db_user, $db_pass
     $conn = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8", $db_user, $db_pass);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
