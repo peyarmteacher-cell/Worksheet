@@ -99,9 +99,9 @@ switch ($path) {
         $user = getAuthUser($conn);
         if (!$user) { http_response_code(401); exit; }
         
-        $apiKey = !empty($user['api_key']) ? $user['api_key'] : ""; // ใส่ Key ของระบบเผื่อไว้ที่นี่ได้ครับ
+        $apiKey = !empty($user['api_key']) ? $user['api_key'] : ""; 
         if (!$apiKey) {
-            echo json_encode(["error" => "ไม่พบ API KEY ของคุณครู"]);
+            echo json_encode(["error" => "ไม่พบ API KEY กรุณาเข้าที่เมนูโปรไฟล์เพื่อตั้งค่า API KEY ก่อนใช้งาน"]);
             exit;
         }
 
@@ -110,9 +110,7 @@ switch ($path) {
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
         $payload = [
-            "contents" => [
-                ["parts" => [["text" => $prompt]]]
-            ],
+            "contents" => [["parts" => [["text" => $prompt]]]],
             "generationConfig" => ["responseMimeType" => "application/json"],
             "systemInstruction" => ["parts" => [["text" => $system]]]
         ];
@@ -123,17 +121,34 @@ switch ($path) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err = curl_error($ch);
         curl_close($ch);
 
         if ($err) {
-            echo json_encode(["error" => "AI ขัดข้อง: " . $err]);
+            echo json_encode(["error" => "การเชื่อมต่อขัดข้อง: " . $err]);
         } else {
             $result = json_decode($response, true);
+            
+            if ($httpCode !== 200) {
+                $errorMsg = isset($result['error']['message']) ? $result['error']['message'] : "Unknown API Error";
+                echo json_encode(["error" => "Google AI Error ($httpCode): " . $errorMsg]);
+                exit;
+            }
+
             if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-                echo $result['candidates'][0]['content']['parts'][0]['text'];
+                $textRaw = $result['candidates'][0]['content']['parts'][0]['text'];
+                
+                preg_match('/\{[\s\S]*\}/', $textRaw, $matches);
+                $cleanedJson = $matches ? $matches[0] : $textRaw;
+                
+                if (json_decode($cleanedJson) !== null) {
+                    echo $cleanedJson;
+                } else {
+                    echo json_encode(["error" => "AI ส่งข้อมูลกลับมาผิดรูปแบบ: " . $textRaw]);
+                }
             } else {
-                echo json_encode(["error" => "การตอบสนองจาก AI ไม่ถูกต้อง"]);
+                echo json_encode(["error" => "AI ไม่สามารถสร้างเนื้อหาได้ (อาจติดตัวกรองความปลอดภัย)"]);
             }
         }
         break;
