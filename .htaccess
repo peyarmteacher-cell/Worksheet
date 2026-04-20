@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # 1. จัดการ routing สำหรับ API
+    # เปลี่ยนจาก /api/something เป็น api.php?path=something
+    RewriteRule ^api/(.*)$ api.php?path=$1 [QSA,L]
+
+    # 2. จัดการ routing สำหรับ React SPA
+    # ถ้าไม่ใช่ไฟล์จริง หรือโฟลเดอร์จริง ให้ส่งไปที่ index.html เพื่อให้ React จัดการต่อ
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [L]
+</IfModule>

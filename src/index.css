@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3498DB;
+  --color-secondary: #2ECC71;
+  --color-accent: #F1C40F;
+  --color-danger: #E74C3C;
+  --color-white: #FFFFFF;
+  --color-gray: #95A5A6;
+  
+  --font-sans: 'Inter', 'Helvetica Neue', Arial, 'Tahoma', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: #F0F7FF;
+    color: #2D3436;
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .btn-level {
+    @apply p-2 rounded-xl border-2 border-[#E1E8ED] bg-transparent cursor-pointer font-semibold text-sm transition-all;
+  }
+  
+  .btn-level.active {
+    @apply bg-primary text-white border-primary;
+  }
+  
+  .subject-item {
+    @apply p-3 rounded-xl mb-1 cursor-pointer flex items-center gap-2 font-medium transition-colors;
+  }
+  
+  .subject-item.active {
+    @apply bg-[#E1F0FF] text-primary;
+  }
+  
+  .card {
+    @apply bg-white rounded-3xl p-5 shadow-sm border-2 border-[#E1E8ED];
+  }
+  
+  .btn {
+    @apply px-6 py-3 rounded-xl border-none font-bold cursor-pointer flex items-center gap-2 text-sm transition-all active:scale-95 hover:brightness-105;
+  }
+  
+  .btn-primary { @apply bg-primary text-white hover:opacity-90; }
+  .btn-secondary { @apply bg-secondary text-white hover:opacity-90; }
+  .btn-accent { @apply bg-accent text-[#444] hover:opacity-90; }
+  .btn-outline { @apply bg-white border-2 border-[#E1E8ED] text-gray hover:bg-[#F8FAFC]; }
+}
+
+/* Custom indicator badge */
+.indicator-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #FFEAA7;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* Sidebar and Main Layout */
+.layout-container {
+  @apply flex h-screen w-screen overflow-hidden;
+}
+
+.sidebar {
+  @apply w-64 bg-white border-r-4 border-primary p-5 flex flex-col shadow-lg z-10;
+}
+
+.main-content {
+  @apply flex-1 flex flex-col p-6 gap-5 overflow-y-auto;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E0;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #95A5A6;
+}
