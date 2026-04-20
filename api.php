@@ -14,11 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// 1. ตั้งค่าฐานข้อมูล (คุณครูแก้ไขจุดนี้ให้ตรงกับ Hosting ของคุณครูได้เลยครับ)
-$db_host = "localhost";
-$db_user = "root";
-$db_pass = "";
-$db_name = "worksheet_db";
+// 1. ดึงการตั้งค่าฐานข้อมูลจากไฟล์แยก
+require_once 'config.php';
 
 try {
     $conn = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8", $db_user, $db_pass);
