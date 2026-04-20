@@ -403,154 +403,185 @@ export default function App() {
     }
 
     return (
-      <div className="flex flex-col gap-6 h-full">
-        <section className="card flex-1 flex flex-col gap-6 overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-600 block">รูปแบบแบบฝึกหัด</label>
-              <select 
-                value={exerciseType}
-                onChange={(e) => setExerciseType(e.target.value as ExerciseType)}
-                className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none"
-              >
-                <option>การจับคู่ (Matching)</option>
-                <option>ปรนัย (Multiple Choice)</option>
-                <option>อัตนัย (Writing)</option>
-                <option>เติมคำในช่องว่าง (Fill-in-the-blanks)</option>
-              </select>
+      <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 h-full items-start">
+        {/* คอลัมน์ตั้งค่า (Settings Column) */}
+        <section className="lg:col-span-4 flex flex-col gap-6 w-full sticky top-0">
+          <div className="card space-y-6">
+            <h3 className="font-black text-gray-800 flex items-center gap-2">
+               <Settings className="w-5 h-5 text-primary" /> ตั้งค่าแบบฝึกหัด
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-wider">รูปแบบ</label>
+                <select 
+                  value={exerciseType}
+                  onChange={(e) => setExerciseType(e.target.value as ExerciseType)}
+                  className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none font-bold text-sm"
+                >
+                  <option>การจับคู่ (Matching)</option>
+                  <option>ปรนัย (Multiple Choice)</option>
+                  <option>อัตนัย (Writing)</option>
+                  <option>เติมคำในช่องว่าง (Fill-in-the-blanks)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-wider">จำนวนข้อ</label>
+                  <input 
+                    type="number" 
+                    min="1" max="20"
+                    value={itemCount}
+                    onChange={(e) => setItemCount(parseInt(e.target.value))}
+                    className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none font-bold text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-wider">ความยาก</label>
+                  <select 
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+                    className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none font-bold text-sm"
+                  >
+                    <option>ง่าย</option>
+                    <option>ปานกลาง</option>
+                    <option>ท้าทาย</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-wider">รายละเอียดเนื้อหา / ตัวชี้วัด</label>
+                <textarea 
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="ใส่บทเรียนหรือตัวชี้วัดที่ต้องการ เช่น มาตราตัวสะกด..."
+                  className="w-full h-32 p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary outline-none transition-all resize-none font-medium text-sm"
+                />
+                {currentExercise?.indicator && (
+                  <div className="indicator-badge">📍 ตัวชี้วัด: {currentExercise.indicator}</div>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-600 block">จำนวนข้อ</label>
-              <input 
-                type="number" 
-                min="1" max="20"
-                value={itemCount}
-                onChange={(e) => setItemCount(parseInt(e.target.value))}
-                className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-600 block">ระดับความยาก</label>
-              <select 
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                className="w-full p-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-primary outline-none"
-              >
-                <option>ง่าย</option>
-                <option>ปานกลาง</option>
-                <option>ท้าทาย</option>
-              </select>
+
+            <div className="pt-4 border-t border-gray-50 flex flex-col gap-3">
+              <button onClick={handleGenerate} disabled={isGenerating} className="btn btn-primary w-full justify-center py-4">
+                <Rocket className={`w-6 h-6 ${isGenerating ? 'animate-bounce' : ''}`} />
+                <span className="text-lg">{isGenerating ? 'กำลังสร้าง...' : 'สร้างด้วย AI'}</span>
+              </button>
+              
+              <div className="flex gap-2">
+                <button onClick={() => { setCurrentExercise(null); setDescription(''); }} className="btn btn-outline flex-1 justify-center">
+                  <PlusCircle className="w-4 h-4" /> <span>ล้างค่า</span>
+                </button>
+                <button onClick={handleSaveToDB} disabled={!currentExercise} className="btn btn-secondary flex-1 justify-center">
+                  <Save className="w-4 h-4" /> <span>บันทึก</span>
+                </button>
+              </div>
+
+              <button onClick={() => window.print()} disabled={!currentExercise} className="btn btn-accent w-full justify-center">
+                <Printer className="w-5 h-5" /> <span>พิมพ์กระดาษ A4</span>
+              </button>
             </div>
           </div>
+        </section>
 
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-600 block">คำอธิบายเนื้อหา / ตัวชี้วัด</label>
-            <textarea 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="เช่น เรื่องภูมิศาสตร์ประเทศไทย ทรัพยากรธรรมชาติ ป.3"
-              className="w-full h-24 p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-primary outline-none transition-all resize-none"
-            />
-            {currentExercise?.indicator && (
-              <div className="indicator-badge">📍 ตัวชี้วัด: {currentExercise.indicator}</div>
-            )}
-          </div>
-
-          <div className="flex-1 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-6 relative overflow-y-auto">
+        {/* คอลัมน์แสดงผล (Preview Column) */}
+        <section className="lg:col-span-8 w-full flex flex-col gap-6">
+          <div className="bg-gray-100/50 border-4 border-dashed border-gray-200 rounded-[2.5rem] min-h-[85vh] p-4 lg:p-10 relative flex flex-col">
             <AnimatePresence mode="wait">
               {isGenerating && (
                 <motion.div 
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 z-20"
+                  className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 z-20 rounded-[2rem]"
                 >
-                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="font-bold text-primary">AI กำลังคัดเลือกเนื้อหาตามหลักสูตร...</p>
+                  <div className="w-20 h-20 border-8 border-primary border-t-transparent rounded-full animate-spin mb-6" />
+                  <h3 className="text-2xl font-black text-primary">กำลังรังสรรค์แบบฝึกหัด...</h3>
+                  <p className="text-gray-400 font-bold mt-2">โปรดรอสักครู่ AI กำลังประมวลผลตามหลักสูตรแกนกลาง</p>
                 </motion.div>
               )}
 
               {currentExercise ? (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 bg-white p-[2cm] shadow-xl w-full max-w-[21cm] mx-auto print:shadow-none print:p-0 print:m-0" id="print-area">
-                  <div className="text-center pb-8 border-b-2 border-black">
-                    <h3 className="text-3xl font-bold mb-2">{currentExercise.title}</h3>
-                    <div className="flex justify-between text-base font-bold mt-4">
-                      <span>ชื่อ...........................................................................</span>
-                      <span>ชั้น.................. เลขที่..................</span>
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="bg-white shadow-2xl w-full max-w-[21cm] mx-auto p-[1.5cm] lg:p-[2.5cm] min-h-[29.7cm] flex flex-col" 
+                  id="print-area"
+                >
+                  <div className="text-center pb-10 border-b-4 border-black mb-10">
+                    <h3 className="text-4xl font-black mb-4 tracking-tight">{currentExercise.title}</h3>
+                    <div className="grid grid-cols-2 gap-4 text-lg font-bold mt-8">
+                      <span className="text-left">ชื่อ-นามสกุล...........................................................................</span>
+                      <span className="text-right">ชั้น.................. เลขที่..................</span>
                     </div>
-                    <p className="text-sm mt-6 text-left border-2 border-black p-2 inline-block w-full">
-                      <strong>คำชี้แจง:</strong> {currentExercise.instructions}
-                    </p>
+                    {currentExercise.instructions && (
+                      <div className="text-left border-4 border-black p-4 mt-10 rounded-lg">
+                        <strong className="text-xl">คำชี้แจง:</strong> 
+                        <p className="mt-2 text-lg leading-relaxed">{currentExercise.instructions}</p>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-10">
+                  <div className="space-y-12 flex-1">
                     {currentExercise.items?.map((item: any, idx: number) => (
-                      <div key={idx} className="space-y-4">
-                        <p className="font-bold text-xl">{idx + 1}. {item.question || item.prompt}</p>
+                      <div key={idx} className="space-y-6">
+                        <div className="flex gap-3">
+                          <span className="text-2xl font-black min-w-[1.5rem]">{idx + 1}.</span>
+                          <p className="font-bold text-2xl leading-snug">{item.question || item.prompt}</p>
+                        </div>
                         
                         {exerciseType === 'ปรนัย (Multiple Choice)' && item.options && (
-                          <div className="grid grid-cols-2 gap-y-4 gap-x-12 pl-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pl-10">
                             {(Array.isArray(item.options) ? item.options : Object.values(item.options)).map((opt: any, oIdx: number) => (
-                              <div key={oIdx} className="flex gap-2">
-                                <span className="font-bold">{['ก.', 'ข.', 'ค.', 'ง.'][oIdx]}</span>
-                                <span>{opt}</span>
+                              <div key={oIdx} className="flex gap-3 items-start">
+                                <span className="font-black text-xl min-w-[2rem]">{['ก.', 'ข.', 'ค.', 'ง.'][oIdx]}</span>
+                                <span className="text-xl">{opt}</span>
                               </div>
                             ))}
                           </div>
                         )}
 
                         {exerciseType === 'เติมคำในช่องว่าง (Fill-in-the-blanks)' && (
-                          <div className="h-10 border-b-2 border-black w-2/3 ml-6"></div>
+                          <div className="h-12 border-b-2 border-black w-3/4 ml-10"></div>
                         )}
 
                         {exerciseType === 'การจับคู่ (Matching)' && (
-                           <div className="flex justify-between items-center px-16">
-                              <span className="p-3 border-2 border-black min-w-[100px] text-center">........................</span>
-                              <div className="h-[1px] bg-black w-20"></div>
-                              <span className="p-3 border-2 border-black min-w-[200px] font-bold text-center">{item.match || '......'}</span>
+                           <div className="flex justify-between items-center px-20">
+                              <span className="p-4 border-4 border-black min-w-[120px] text-center rounded-xl">........................</span>
+                              <div className="flex-1 mx-8 border-t-2 border-dashed border-black"></div>
+                              <span className="p-4 border-4 border-black min-w-[220px] font-black text-center rounded-xl bg-gray-50">{item.match || '......'}</span>
                            </div>
                         )}
 
                         {exerciseType === 'อัตนัย (Writing)' && (
-                          <div className="space-y-3 pl-6">
-                            <div className="h-8 border-b border-black/30 w-full"></div>
-                            <div className="h-8 border-b border-black/30 w-full"></div>
-                            <div className="h-8 border-b border-black/30 w-full"></div>
+                          <div className="space-y-4 pl-10">
+                            <div className="h-10 border-b-2 border-black/20 w-full"></div>
+                            <div className="h-10 border-b-2 border-black/20 w-full"></div>
+                            <div className="h-10 border-b-2 border-black/20 w-full"></div>
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-20 pt-10 border-t border-black hidden print:block text-xs text-center font-bold">
-                    ครูผู้สอน: {currentUser?.full_name} | โรงเรียน: {currentUser?.school} | ตำแหน่ง: {currentUser?.position}
+                  <div className="mt-20 pt-10 border-t-2 border-black/10 hidden print:block text-sm text-center font-bold text-gray-500 italic">
+                    สร้างโดย: KruAI Studio | ครูผู้สอน: {currentUser?.full_name} | โรงเรียน: {currentUser?.school}
                   </div>
                 </motion.div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-300 text-center space-y-4">
-                  <FileText className="w-16 h-16 opacity-10" />
-                  <p className="font-bold">ใส่รายละเอียดและกดปุ่มด้านล่างเพื่อเริ่มสร้าง</p>
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-300 text-center space-y-6">
+                  <div className="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center">
+                    <FileText className="w-16 h-16 opacity-10" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black text-gray-400">ยังไม่มีข้อมูลแบบฝึกหัด</p>
+                    <p className="font-bold text-gray-300">กรุณาตั้งค่าด้านซ้ายและกด "สร้างด้วย AI" เพื่อเริ่มใช้งาน</p>
+                  </div>
                 </div>
               )}
             </AnimatePresence>
           </div>
-
-          <div className="flex justify-between items-center">
-            <button onClick={() => { setCurrentExercise(null); setDescription(''); }} className="btn btn-outline">
-              <PlusCircle className="w-5 h-5" /> <span>ล้างค่า</span>
-            </button>
-            <button onClick={handleGenerate} disabled={isGenerating} className="btn btn-primary">
-              <Rocket className={`w-5 h-5 ${isGenerating ? 'animate-bounce' : ''}`} />
-              <span>{isGenerating ? 'กำลังสร้างแบบฝึกหัด...' : 'สร้างแบบฝึกหัดด้วย AI'}</span>
-            </button>
-          </div>
-        </section>
-
-        <section className="flex gap-4 justify-end">
-          <button onClick={handleSaveToDB} disabled={!currentExercise} className="btn btn-secondary">
-            <Save className="w-5 h-5" /> <span>บันทึกลงฐานข้อมูล MySQL</span>
-          </button>
-          <button onClick={() => window.print()} disabled={!currentExercise} className="btn btn-accent">
-            <Printer className="w-5 h-5" /> <span>พิมพ์กระดาษ A4</span>
-          </button>
         </section>
       </div>
     );
